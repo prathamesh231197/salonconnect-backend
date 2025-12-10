@@ -35,6 +35,35 @@ Invoke-WebRequest -Uri "http://localhost:8000/api/auth/register" -Method POST -H
 $token = "<paste token>"
 Invoke-WebRequest -Uri "http://localhost:8000/api/users/me" -Method GET -Headers @{ "Authorization" = "Bearer $token" } -UseBasicParsing
 
+##Example
+##Login and get token
+$body = '{"email":"alice@example.com","password":"password123"}'
+
+(Invoke-WebRequest `
+  -Uri "http://localhost:8000/api/auth/login" `
+  -Method POST `
+  -Headers @{ "Content-Type" = "application/json" } `
+  -Body $body `
+  -UseBasicParsing `
+).Content
+
+##response
+{
+  "access_token": "NEW_TOKEN_HERE",
+  "token_type": "bearer"
+}
+
+##enter the token variable in powershell
+$token = "PASTE_NEW_TOKEN_HERE"
+
+##check the useer
+(Invoke-WebRequest `
+  -Uri "http://localhost:8000/api/users/me" `
+  -Method GET `
+  -Headers @{ "Authorization" = "Bearer $token" } `
+  -UseBasicParsing `
+).Content
+
 
 
 ##Project layout

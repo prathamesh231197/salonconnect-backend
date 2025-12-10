@@ -1,14 +1,12 @@
 # app/db/models.py
-from sqlalchemy import Column, Integer, String, DateTime, func, ForeignKey, Float, Text
+from sqlalchemy import Column, Integer, String, DateTime, func, ForeignKey, Float, Text, Enum
 from sqlalchemy.orm import relationship
 from db.session import Base
-
-# --- User model (single definition) ---
+import enum
 
 
 class User(Base):
     __tablename__ = "users"
-
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=True)
     email = Column(String, unique=True, index=True, nullable=False)
@@ -17,12 +15,9 @@ class User(Base):
     role = Column(String, default="customer")  # customer | barber | admin
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-# --- Salon model ---
-
 
 class Salon(Base):
     __tablename__ = "salons"
-
     id = Column(Integer, primary_key=True, index=True)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     business_name = Column(String, nullable=False, index=True)
@@ -37,12 +32,9 @@ class Salon(Base):
     services = relationship(
         "Service", back_populates="salon", cascade="all, delete-orphan")
 
-# --- Service model ---
-
 
 class Service(Base):
     __tablename__ = "services"
-
     id = Column(Integer, primary_key=True, index=True)
     salon_id = Column(Integer, ForeignKey("salons.id"), nullable=False)
     name = Column(String, nullable=False)
@@ -51,3 +43,30 @@ class Service(Base):
     price = Column(Float, nullable=False, default=0.0)
 
     salon = relationship("Salon", back_populates="services")
+
+
+class BookingStatus(enum.Enum):
+    pending = "pending"
+    approved = "approved"
+    rejected = "rejected"
+    cancelled = "cancelled"
+    completed = "completed"
+
+
+class Booking(Base):
+    __tablename__ = "bookings"
+    id = Column(Integer, primary_key=True, index=True)
+    salon_id = Column(Integer, ForeignKey("salons.id"), nullable=False)
+    service_id = Column(Integer, ForeignKey("services.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"),
+                     nullable=False)  # customer
+    # ISO timestamp expected
+    start_time = Column(DateTime(timezone=True), nullable=False)
+    end_time = Column(DateTime(timezone=True), nullable=False)
+    status = Column(String, nullable=False,
+                    default=BookingStatus.pending.value)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    salon = relationship("Salon", backref="bookings")
+    service = relationship("Service")
+    user = relationship("User")

@@ -6,6 +6,7 @@ from db.session import engine, Base
 from api.v1 import auth
 from api.v1 import users
 from api.v1 import salons
+from api.v1 import bookings
 
 # create tables (simple approach for dev)
 Base.metadata.create_all(bind=engine)
@@ -31,3 +32,4 @@ async def health():
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(users.router, prefix="/api/users", tags=["users"])
 app.include_router(salons.router, prefix="/api/salons", tags=["salons"])
+app.include_router(bookings.router, prefix="/api/bookings", tags=["bookings"])

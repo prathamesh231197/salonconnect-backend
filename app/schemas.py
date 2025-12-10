@@ -1,6 +1,7 @@
 # app/schemas.py
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
+from datetime import datetime
 
 
 class UserCreate(BaseModel):
@@ -59,6 +60,30 @@ class SalonOut(BaseModel):
     lng: Optional[float] = None
     phone: Optional[str] = None
     services: List[ServiceOut] = []
+
+    class Config:
+        from_attributes = True
+
+
+# bookings schemas (add to app/schemas.py)
+
+class BookingCreate(BaseModel):
+    salon_id: int
+    service_id: int
+    start_time: datetime  # ISO format accepted
+    # end_time optional if you want to compute from service duration; include for flexibility:
+    end_time: Optional[datetime] = None
+
+
+class BookingOut(BaseModel):
+    id: int
+    salon_id: int
+    service_id: int
+    user_id: int
+    start_time: datetime
+    end_time: datetime
+    status: str
+    created_at: datetime
 
     class Config:
         from_attributes = True
