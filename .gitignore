@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.env
+env/
+venv/
+venv.bak/
+pip-log.txt
+pip-delete-this-directory.txt
+*.sqlite3
+*.db
+
+# Docker
+docker-compose.override.yml
+*.log
+
+# VS Code
+.vscode/
+
+# Mac
+.DS_Store
+
+# PyCharm
+.idea/
+
+# Docker volumes (local postgres data)
+pgdata/
+
+# Build artifacts
+dist/
+build/
+
+# Sensitive files (don't commit secrets)
+*.pem
+*.key
