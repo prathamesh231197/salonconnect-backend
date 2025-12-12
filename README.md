@@ -28,7 +28,12 @@ docker compose up --build
 ##How to test
 
 ##Register
-Invoke-WebRequest -Uri "http://localhost:8000/api/auth/register" -Method POST -Headers @{ "Content-Type" = "application/json" } -Body '{"email":"alice@example.com","password":"password123","name":"Alice"}'
+# Register owner (replace email/password if you like)
+$ownerReg = Invoke-WebRequest -Uri "http://localhost:8000/api/auth/register" -Method POST `
+  -Headers @{ "Content-Type" = "application/json" } `
+  -Body '{"email":"owner@example.com","password":"ownerpass","name":"Owner"}' -UseBasicParsing
+
+$ownerReg.Content
 
 
 ##get current user

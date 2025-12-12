@@ -28,6 +28,14 @@ class Salon(Base):
     phone = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+    # New fields for timezone and working hours (simple per-day range)
+    # e.g. "Asia/Kolkata"
+    timezone = Column(String, nullable=False, default="UTC")
+    # hour in 24h (local salon tz)
+    work_start_hour = Column(Integer, nullable=False, default=9)
+    # hour in 24h (local salon tz)
+    work_end_hour = Column(Integer, nullable=False, default=18)
+
     owner = relationship("User", backref="salons")
     services = relationship(
         "Service", back_populates="salon", cascade="all, delete-orphan")
