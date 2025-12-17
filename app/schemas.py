@@ -9,6 +9,7 @@ class UserCreate(BaseModel):
     password: str
     name: Optional[str] = None
     phone: Optional[str] = None
+    role: Optional[int] = None  # e.g., 0=admin,1=customer,2=salon_owner
 
 
 class Token(BaseModel):
