@@ -32,7 +32,7 @@ def register(payload: UserCreate, db: Session = Depends(get_db)):
     if existing:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
     user = create_user(db, email=payload.email, password=payload.password,
-                       name=payload.name, phone=payload.phone)
+                       name=payload.name, phone=payload.phone, role=payload.role)
     # return a safe dict (exclude hashed_password) — ensure it matches RegisterResponse.data
     user_data = {
         "id": user.id,
