@@ -1,6 +1,10 @@
-# app/main.py
+import sys
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+# Adjust path to allow imports from current directory (app/)
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from db.session import engine, Base
 from api.v1 import auth
