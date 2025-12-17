@@ -15,6 +15,10 @@ class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
 
+class RegisterResponse(BaseModel):
+    status: int
+    message: str
+    data: dict
 
 class TokenData(BaseModel):
     email: Optional[str] = None
@@ -47,6 +51,9 @@ class SalonCreate(BaseModel):
     lat: Optional[float] = None
     lng: Optional[float] = None
     phone: Optional[str] = None
+    timezone: Optional[str] = "UTC"
+    work_start_hour: Optional[int] = 9
+    work_end_hour: Optional[int] = 18
     services: Optional[List[ServiceCreate]] = []
 
 
@@ -59,6 +66,9 @@ class SalonOut(BaseModel):
     lat: Optional[float] = None
     lng: Optional[float] = None
     phone: Optional[str] = None
+    timezone: str
+    work_start_hour: int
+    work_end_hour: int
     services: List[ServiceOut] = []
 
     class Config:

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from db.session import SessionLocal
-from schemas import UserCreate, Token
+from schemas import RegisterResponse, UserCreate, Token
 from crud.user import get_user_by_email, create_user, verify_password
 from core.security import create_access_token
 
@@ -26,15 +26,23 @@ class LoginIn(BaseModel):
     password: str
 
 
-@router.post("/register", response_model=Token)
+@router.post("/register", response_model=RegisterResponse, status_code=status.HTTP_201_CREATED)
 def register(payload: UserCreate, db: Session = Depends(get_db)):
     existing = get_user_by_email(db, payload.email)
     if existing:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
     user = create_user(db, email=payload.email, password=payload.password,
                        name=payload.name, phone=payload.phone)
-    access_token = create_access_token(subject=user.email)
-    return {"access_token": access_token, "token_type": "bearer"}
+    # return a safe dict (exclude hashed_password) — ensure it matches RegisterResponse.data
+    user_data = {
+        "id": user.id,
+        "email": user.email,
+        "name": user.name,
+        "phone": user.phone,
+        "role": user.role,
+        "created_at": str(user.created_at) if user.created_at else None,
+    }
+    return {"status": status.HTTP_201_CREATED, "data": user_data, "message": "User registered successfully"}
 
 
 @router.post("/login", response_model=Token)
@@ -43,5 +51,6 @@ def login(payload: LoginIn, db: Session = Depends(get_db)):
     if not user or not verify_password(payload.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
-    access_token = create_access_token(subject=user.email)
+    # include sanitized user object (without password) inside the token
+    access_token = create_access_token(subject=user)
     return {"access_token": access_token, "token_type": "bearer"}

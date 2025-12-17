@@ -12,9 +12,40 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(
     os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 
 
-def create_access_token(subject: str, expires_delta: Optional[timedelta] = None) -> str:
+from typing import Union, Dict, Any
+
+def create_access_token(subject: Union[str, Dict[str, Any]], expires_delta: Optional[timedelta] = None) -> str:
+    """
+    Create JWT. `subject` can be an email string, a dict, or a SQLAlchemy user object.
+    If a user dict/object is provided, include a sanitized `user` claim (excluding password/hash).
+    """
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
-    to_encode = {"exp": expire, "sub": str(subject)}
+
+    user_claim = None
+    # If subject is a string, treat as email
+    if isinstance(subject, str):
+        sub = subject
+    else:
+        # If it's a dict (or sqlalchemy model-like), build a sanitized user dict
+        if isinstance(subject, dict):
+            sub = str(subject.get("email")) if subject.get("email") else str(subject)
+            user_claim = {k: v for k, v in subject.items() if k not in ("hashed_password", "password")}
+        else:
+            # likely a SQLAlchemy model instance
+            sub = getattr(subject, "email", str(subject))
+            user_claim = {
+                "id": getattr(subject, "id", None),
+                "email": getattr(subject, "email", None),
+                "name": getattr(subject, "name", None),
+                "phone": getattr(subject, "phone", None),
+                "role": getattr(subject, "role", None),
+                "created_at": str(getattr(subject, "created_at")) if getattr(subject, "created_at", None) else None,
+            }
+
+    to_encode = {"exp": expire, "sub": sub}
+    if user_claim:
+        to_encode["user"] = user_claim
+
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 

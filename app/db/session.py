@@ -3,7 +3,7 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./dev.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://salon:salonpass@localhost:5433/salon_db")
 
 # echo=True for SQL logging (handy while learning)
 engine = create_engine(DATABASE_URL, echo=False, future=True)
