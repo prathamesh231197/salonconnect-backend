@@ -1,5 +1,5 @@
 # app/schemas.py
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, root_validator
 from typing import Optional, List
 from datetime import datetime
 
@@ -15,6 +15,21 @@ class UserCreate(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+class ChangePassword(BaseModel):
+    old_password: str
+    new_password: str
+
+class ChangePasswordByIdentifier(BaseModel):
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    old_password: str
+    new_password: str
+
+    def require_email_or_phone(cls, values):
+        if not values.get("email") and not values.get("phone"):
+            raise ValueError("Either email or phone is required")
+        return values
 
 class RegisterResponse(BaseModel):
     status: int
