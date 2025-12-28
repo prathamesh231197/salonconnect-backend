@@ -18,7 +18,7 @@ services:
     volumes:
       - ./app:/app
     environment:
-      DATABASE_URL: postgresql://salon:salonpass@db:5432/salon_db
+      DATABASE_URL: postgresql://salon:lTss13uzfPYOgo0nqEceBkXr60YOWHfR@dpg-d58njs75r7bs738qtp90-a.virginia-postgres.render.com/salon_db_0czk
       SECRET_KEY: c48e4acb9d22794bd03e3f0e3b1eaf82afb35a72f8ec0ec09947eb7755c57f40
       ACCESS_TOKEN_EXPIRE_MINUTES: "30"
     ports:
