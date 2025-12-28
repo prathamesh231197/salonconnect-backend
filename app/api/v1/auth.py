@@ -1,39 +1,14 @@
 # app/api/v1/auth.py
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
-from db.session import SessionLocal
 from schemas import RegisterResponse, UserCreate, Token, ChangePassword, ChangePasswordByIdentifier
 from crud.user import get_user_by_email, create_user, get_user_by_mobile_number, verify_password, change_password
-from core.security import create_access_token, decode_access_token
+from core.security import create_access_token
+from api.deps import get_db, get_current_user
 
 router = APIRouter()
-
-# OAuth2 scheme for auth-required endpoints
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login")
-
-
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(lambda: SessionLocal())):
-    """Resolve the currently authenticated user from the bearer token."""
-    email = decode_access_token(token)
-    if not email:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
-    user = get_user_by_email(db, email)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
-    return user
-
-# Dependency to get DB Session
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 class LoginIn(BaseModel):

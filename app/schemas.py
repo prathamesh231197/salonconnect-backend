@@ -71,7 +71,7 @@ class SalonCreate(BaseModel):
     work_start_hour: Optional[int] = 9
     work_end_hour: Optional[int] = 18
     services: Optional[List[ServiceCreate]] = []
-
+    city: Optional[str] = None
 
 class SalonOut(BaseModel):
     id: int
@@ -85,6 +85,8 @@ class SalonOut(BaseModel):
     timezone: str
     work_start_hour: int
     work_end_hour: int
+    created_at: Optional[str] = None  # ISO format datetime string
+    city: Optional[str] = None
     services: List[ServiceOut] = []
 
     class Config:

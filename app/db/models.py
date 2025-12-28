@@ -27,7 +27,7 @@ class Salon(Base):
     lng = Column(Float, nullable=True)
     phone = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-
+    city = Column(String, nullable=True)
     # New fields for timezone and working hours (simple per-day range)
     # e.g. "Asia/Kolkata"
     timezone = Column(String, nullable=False, default="UTC")
