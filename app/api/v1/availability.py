@@ -1,44 +1,14 @@
 # app/api/v1/availability.py
-from fastapi import APIRouter, Depends, HTTPException, status, Header, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import Optional, List
 from datetime import datetime, time, timedelta, date
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from zoneinfo import ZoneInfo
 
-from db.session import SessionLocal
 from db import models
-from crud.user import get_user_by_email
-from core.security import decode_access_token
+from api.deps import get_db, get_current_user
 
 router = APIRouter()
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-def _user_from_header(authorization: Optional[str], db: Session):
-    if not authorization:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                            detail="Authorization header required")
-    parts = authorization.split()
-    if len(parts) != 2 or parts[0].lower() != "bearer":
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                            detail="Invalid authorization header")
-    token = parts[1]
-    email = decode_access_token(token)
-    if not email:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
-    user = get_user_by_email(db, email)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
-    return user
 
 
 def _overlaps(a_start: datetime, a_end: datetime, b_start: datetime, b_end: datetime) -> bool:
@@ -57,13 +27,14 @@ def get_availability_for_salon(
         10, description="Maximum number of slots to return (default 10)"),
     days_ahead: Optional[int] = Query(
         7, description="If date omitted, search up to N days ahead (default 7)"),
-    authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db),
 ):
     """
     Returns available start/end slots for a salon and service.
     Uses the salon's timezone and `work_start_hour`/`work_end_hour` stored in DB.
     Returns local times (salon tz) and UTC times.
+    
+    Note: This endpoint does not require authentication as availability is public.
     """
     salon = db.query(models.Salon).filter(models.Salon.id == salon_id).first()
     if not salon:
@@ -81,13 +52,6 @@ def get_availability_for_salon(
     except Exception:
         # fallback to UTC if invalid
         tz = ZoneInfo("UTC")
-
-    # optional auth (not required to see availability)
-    if authorization:
-        try:
-            _user_from_header(authorization, db)
-        except HTTPException:
-            pass
 
     def _fetch_bookings_between(start_dt_utc: datetime, end_dt_utc: datetime):
         return db.query(models.Booking).filter(

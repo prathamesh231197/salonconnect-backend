@@ -1,15 +1,12 @@
 # app/api/v1/bookings.py
-from fastapi import APIRouter, Depends, HTTPException, status, Header
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import Optional
-from datetime import datetime, timedelta
+from datetime import timedelta
 
-from db.session import SessionLocal
 from crud.booking import create_booking, get_booking, list_user_bookings, list_salon_bookings, update_booking_status, delete_booking
-from crud.user import get_user_by_email
-from core.security import decode_access_token
 from schemas import BookingCreate, BookingOut
 from db import models
+from api.deps import get_db, get_current_user
 
 router = APIRouter()
 
@@ -28,37 +25,13 @@ def _booking_to_dict(b):
     }
 
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-def _user_from_header(authorization: Optional[str], db: Session):
-    if not authorization:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                            detail="Authorization header required")
-    parts = authorization.split()
-    if len(parts) != 2 or parts[0].lower() != "bearer":
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                            detail="Invalid authorization header")
-    token = parts[1]
-    email = decode_access_token(token)
-    if not email:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
-    user = get_user_by_email(db, email)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
-    return user
-
-
 @router.post("", response_model=BookingOut, status_code=status.HTTP_201_CREATED)
-def create_booking_endpoint(payload: BookingCreate, authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
-    user = _user_from_header(authorization, db)
+def create_booking_endpoint(
+    payload: BookingCreate,
+    current_user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Create a new booking. Requires authentication."""
     # compute end_time if missing using service duration
     svc = db.query(models.Service).filter(
         models.Service.id == payload.service_id).first()
@@ -67,7 +40,7 @@ def create_booking_endpoint(payload: BookingCreate, authorization: Optional[str]
     start = payload.start_time
     end = payload.end_time or (start + timedelta(minutes=svc.duration_minutes))
     try:
-        booking = create_booking(db, user_id=user.id, salon_id=payload.salon_id,
+        booking = create_booking(db, user_id=current_user.id, salon_id=payload.salon_id,
                                  service_id=payload.service_id, start_time=start, end_time=end)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -75,19 +48,26 @@ def create_booking_endpoint(payload: BookingCreate, authorization: Optional[str]
 
 
 @router.get("", response_model=list[BookingOut])
-def list_my_bookings(authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
-    user = _user_from_header(authorization, db)
-    return [_booking_to_dict(b) for b in list_user_bookings(db, user.id)]
+def list_my_bookings(
+    current_user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """List current user's bookings. Requires authentication."""
+    return [_booking_to_dict(b) for b in list_user_bookings(db, current_user.id)]
 
 
 @router.get("/salon/{salon_id}", response_model=list[BookingOut])
-def list_bookings_for_salon(salon_id: int, authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
-    user = _user_from_header(authorization, db)
+def list_bookings_for_salon(
+    salon_id: int,
+    current_user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """List bookings for a salon. Only salon owner or admin can view."""
     # only salon owner or admin can view
     salon = db.query(models.Salon).filter(models.Salon.id == salon_id).first()
     if not salon:
         raise HTTPException(status_code=404, detail="Salon not found")
-    if salon.owner_id != user.id and user.role != "admin":
+    if salon.owner_id != current_user.id and current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Not authorized")
     return [_booking_to_dict(b) for b in list_salon_bookings(db, salon_id)]
 
@@ -96,7 +76,7 @@ def list_bookings_for_salon(salon_id: int, authorization: Optional[str] = Header
 def update_booking(
     booking_id: int,
     action: str,
-    authorization: Optional[str] = Header(None),
+    current_user = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
@@ -105,7 +85,7 @@ def update_booking(
       - cancel: customer who created it (or admin)
       - complete: salon owner (or admin)
     """
-    user = _user_from_header(authorization, db)
+    user = current_user
     booking = get_booking(db, booking_id)
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
@@ -168,12 +148,17 @@ def update_booking(
 
 
 @router.delete("/{booking_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_booking_endpoint(booking_id: int, authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
-    user = _user_from_header(authorization, db)
+def delete_booking_endpoint(
+    booking_id: int,
+    current_user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Delete a booking. Only the booking owner or admin can delete."""
     booking = get_booking(db, booking_id)
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
-    if booking.user_id != user.id and user.role != "admin":
+    if booking.user_id != current_user.id and current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Not authorized to delete")
     delete_booking(db, booking)
     return None
+
