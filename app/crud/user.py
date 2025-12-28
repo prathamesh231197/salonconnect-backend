@@ -37,6 +37,10 @@ def get_user_by_email(db: Session, email: str):
     """Return a User by email or None"""
     return db.query(models.User).filter(models.User.email == email).first()
 
+def get_user_by_mobile_number(db: Session, mobile_number: str):
+    """Return a User by mobile number or None"""
+    return db.query(models.User).filter(models.User.phone == mobile_number).first()
+
 
 def create_user(db: Session, *, email: str, password: str, name: str = None, phone: str = None, role: int = None):
     """Create and return a new User"""
@@ -56,3 +60,20 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     # also validate length on verify side to avoid passlib raising
     _ensure_password_ok(plain_password)
     return pwd_context.verify(plain_password, hashed_password)
+
+
+def change_password(db: Session, user: models.User, old_password: str, new_password: str):
+    """Verify the old password and set a new password for the user."""
+    # verify current password first
+    if not verify_password(old_password, user.hashed_password):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect password")
+
+    # validate and hash new password
+    normalized = _normalize_for_hash(new_password)
+    hashed = pwd_context.hash(normalized)
+
+    user.hashed_password = hashed
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
