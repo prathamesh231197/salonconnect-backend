@@ -9,9 +9,13 @@ from typing import Optional, List
 from pydantic import BaseModel, Field
 
 from crud.salon import create_salon, get_salon, list_salons, list_nearby_salons
+from crud.user import create_user, get_user_by_email
 from schemas import SalonCreate, SalonOut
 from api.deps import get_db, get_current_user
+from core.security import decode_access_token
 from db.models import User
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from api.deps import bearer_scheme, optional_bearer_scheme
 
 router = APIRouter()
 
@@ -124,16 +128,65 @@ def _check_salon_ownership(salon, user: User) -> None:
 @router.post("/create", response_model=SalonOut, status_code=status.HTTP_201_CREATED)
 def create_salon_endpoint(
     salon_in: SalonCreate,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_bearer_scheme)
 ):
     """
     Create a new salon.
     
-    **Requires**: Bearer token authentication  
-    **Authorization**: Any authenticated user (salon owner role recommended)
+    **If owner_details provided**: Creates a new owner user and links it to the salon. No token required.
+    **If owner_details NOT provided**: Requires Bearer token authentication to use the current user as owner.
     """
-    salon = create_salon(db, owner_id=current_user.id, salon_in=salon_in)
+    owner_id = None
+    
+    # CASE 1: Create a new owner if details are provided
+    if salon_in.owner_details:
+        # Check if user already exists
+        existing_user = get_user_by_email(db, salon_in.owner_details.email)
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User with this email already exists"
+            )
+        
+        # Create new owner (role "2")
+        new_owner = create_user(
+            db,
+            email=salon_in.owner_details.email,
+            password=salon_in.owner_details.password,
+            name=salon_in.owner_details.name,
+            phone=salon_in.owner_details.phone,
+            role=2  # Owner role
+        )
+        owner_id = new_owner.id
+    
+    # CASE 2: Use current authenticated user if no new owner details provided
+    else:
+        if not credentials:
+             raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Not authenticated. Provide owner_details or a Bearer token."
+            )
+        
+        # Manually validate token directly to avoid dependency issues
+        token = credentials.credentials
+        email = decode_access_token(token)
+        if not email:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token"
+            )
+        
+        user = get_user_by_email(db, email)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found"
+            )
+        
+        owner_id = user.id
+
+    salon = create_salon(db, owner_id=owner_id, salon_in=salon_in)
     return _serialize_salon(salon)
 
 

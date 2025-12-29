@@ -49,6 +49,13 @@ class ServiceCreate(BaseModel):
     price: float
 
 
+class ServiceUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    duration_minutes: Optional[int] = None
+    price: Optional[float] = None
+
+
 class ServiceOut(BaseModel):
     id: int
     name: str
@@ -57,7 +64,7 @@ class ServiceOut(BaseModel):
     price: float
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
 class SalonCreate(BaseModel):
@@ -72,6 +79,7 @@ class SalonCreate(BaseModel):
     work_end_hour: Optional[int] = 18
     services: Optional[List[ServiceCreate]] = []
     city: Optional[str] = None
+    owner_details: Optional[UserCreate] = None
 
 class SalonOut(BaseModel):
     id: int
@@ -90,7 +98,7 @@ class SalonOut(BaseModel):
     services: List[ServiceOut] = []
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
 # bookings schemas (add to app/schemas.py)
@@ -114,4 +122,4 @@ class BookingOut(BaseModel):
     created_at: datetime
 
     class Config:
-        from_attributes = True
+        orm_mode = True
