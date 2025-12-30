@@ -13,6 +13,7 @@ from api.v1 import salons
 from api.v1 import services
 from api.v1 import bookings
 from api.v1 import availability
+from api.v1 import employee
 
 
 # create tables (simple approach for dev)
@@ -43,3 +44,5 @@ app.include_router(services.router, prefix="/api/services", tags=["services"])
 app.include_router(bookings.router, prefix="/api/bookings", tags=["bookings"])
 app.include_router(availability.router,
                    prefix="/api/availability", tags=["availability"])
+app.include_router(employee.router,
+                   prefix="/api/employee", tags=["employee"])

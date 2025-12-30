@@ -123,3 +123,20 @@ class BookingOut(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class EmployeeCreate(BaseModel):
+    name: str
+    experience_years: int
+    service_id: int
+
+class EmployeeResponse(BaseModel):
+    id: int
+    name: str
+    experience_years: int
+    service_id: int
+    salon_id: int
+    is_active: bool
+
+    class Config:
+        orm_mode = True

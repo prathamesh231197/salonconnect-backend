@@ -1,17 +1,23 @@
 import os
 import sys
+from dotenv import load_dotenv
+
+# Load .env file
+load_dotenv()
+
 from logging.config import fileConfig
+
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
 
-# Add the app directory to sys.path so we can import our modules
-sys.path.append(os.path.join(os.getcwd(), "app"))
+# Add the project root directory to sys.path so we can import 'app' module
+sys.path.append(os.getcwd())
 
-from db.session import Base
-from db import models # Import models to ensure they are registered on Base.metadata
+from app.db.session import Base
+from app.db import models # Import models to ensure they are registered on Base.metadata
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -28,7 +34,7 @@ target_metadata = Base.metadata
 
 def get_url():
     # Use the same logic as app/db/session.py
-    return os.getenv("DATABASE_URL", os.getenv("DATABASE_URL_LOCAL", "postgresql://salon:lTss13uzfPYOgo0nqEceBkXr60YOWHfR@dpg-d58njs75r7bs738qtp90-a.virginia-postgres.render.com/salon_db_0czk"))
+    return os.getenv("DATABASE_URL", os.getenv("DATABASE_URL", "postgresql://salon:lTss13uzfPYOgo0nqEceBkXr60YOWHfR@dpg-d58njs75r7bs738qtp90-a.virginia-postgres.render.com/salon_db_0czk"))
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
