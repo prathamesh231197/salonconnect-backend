@@ -12,6 +12,24 @@ class UserCreate(BaseModel):
     role: Optional[int] = None  # e.g., 0=admin,1=customer,2=salon_owner
 
 
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    role: Optional[int] = None
+
+
+class UserOut(BaseModel):
+    id: int
+    email: EmailStr
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    role: str  # DB stores as string mostly, or mapped. User model has default="customer"
+    created_at: Optional[datetime] = None
+
+    class Config:
+        orm_mode = True
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
