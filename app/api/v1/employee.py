@@ -16,7 +16,7 @@ def create_employee(
 ):
     print(current_user)
     # Check role "2" is salon owner
-    if current_user.role != "2":
+    if current_user.role != "2" or current_user.role != "0":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, 
             detail="Only salon owners can add employees"
@@ -57,7 +57,7 @@ def get_my_employees(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    if current_user.role != "2":
+    if current_user.role != "2" or current_user.role != "0":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
 
     salon = db.query(Salon).filter(Salon.owner_id == current_user.id).first()
