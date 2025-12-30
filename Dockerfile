@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y build-essential libpq-dev gcc && rm -rf
 
 # copy requirements and application
 COPY requirements.txt /app/requirements.txt
-COPY ./app /app
+COPY ./app /app/app
 COPY ./alembic /app/alembic
 COPY alembic.ini /app/alembic.ini
 COPY start.sh /app/start.sh
