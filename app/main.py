@@ -17,7 +17,8 @@ from api.v1 import employee
 
 
 # create tables (simple approach for dev)
-Base.metadata.create_all(bind=engine)
+# create tables (simple approach for dev)
+# Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="SalonConnect API")
 
