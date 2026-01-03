@@ -1,4 +1,5 @@
 # app/crud/user.py
+from typing import List
 from sqlalchemy.orm import Session
 from db import models
 from passlib.context import CryptContext
@@ -42,6 +43,19 @@ def get_user_by_mobile_number(db: Session, mobile_number: str):
     return db.query(models.User).filter(models.User.phone == mobile_number).first()
 
 
+def get_user(db: Session, user_id: int):
+    """Return a User by ID or None"""
+    return db.query(models.User).filter(models.User.id == user_id).first()
+
+
+def get_users(db: Session, skip: int = 0, limit: int = 100, roles: List[str] = None):
+    """Return list of users, optionally filtered by roles"""
+    query = db.query(models.User)
+    if roles:
+        query = query.filter(models.User.role.in_(roles))
+    return query.offset(skip).limit(limit).all()
+
+
 def create_user(db: Session, *, email: str, password: str, name: str = None, phone: str = None, role: int = None):
     """Create and return a new User"""
     # validate password length before hashing
@@ -76,4 +90,40 @@ def change_password(db: Session, user: models.User, old_password: str, new_passw
     db.add(user)
     db.commit()
     db.refresh(user)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
     return user
+
+
+def update_user(db: Session, *, user_id: int, user_in):
+    """Update user fields"""
+    user = get_user(db, user_id)
+    if not user:
+        return None
+    
+    # user_in can be dict or Pydantic model
+    if isinstance(user_in, dict):
+        update_data = user_in
+    else:
+        update_data = user_in.dict(exclude_unset=True)
+
+    for field in update_data:
+        if hasattr(user, field):
+            setattr(user, field, update_data[field])
+
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def delete_user(db: Session, user_id: int):
+    """Delete a user"""
+    user = get_user(db, user_id)
+    if not user:
+        return False
+    
+    db.delete(user)
+    db.commit()
+    return True

@@ -1,7 +1,7 @@
 # app/db/models.py
-from sqlalchemy import Column, Integer, String, DateTime, func, ForeignKey, Float, Text, Enum
+from sqlalchemy import Column, Integer, String, DateTime, func, ForeignKey, Float, Text, Boolean,Enum
 from sqlalchemy.orm import relationship
-from db.session import Base
+from app.db.session import Base
 import enum
 
 
@@ -39,6 +39,8 @@ class Salon(Base):
     owner = relationship("User", backref="salons")
     services = relationship(
         "Service", back_populates="salon", cascade="all, delete-orphan")
+    employees = relationship("Employee", back_populates="salon")
+
 
 
 class Service(Base):
@@ -51,6 +53,9 @@ class Service(Base):
     price = Column(Float, nullable=False, default=0.0)
 
     salon = relationship("Salon", back_populates="services")
+
+    employees = relationship("Employee", back_populates="service")
+
 
 
 class BookingStatus(enum.Enum):
@@ -78,3 +83,19 @@ class Booking(Base):
     salon = relationship("Salon", backref="bookings")
     service = relationship("Service")
     user = relationship("User")
+
+
+class Employee(Base):
+    __tablename__ = "employees"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    experience_years = Column(Integer, nullable=False)
+
+    salon_id = Column(Integer, ForeignKey("salons.id"), nullable=False)
+    service_id = Column(Integer, ForeignKey("services.id"), nullable=False)
+
+    is_active = Column(Boolean, default=True)
+
+    salon = relationship("Salon", back_populates="employees")
+    service = relationship("Service", back_populates="employees")

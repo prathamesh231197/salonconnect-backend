@@ -18,6 +18,12 @@ bearer_scheme = HTTPBearer(
     description="Enter the access_token from login response (without 'Bearer ' prefix)"
 )
 
+optional_bearer_scheme = HTTPBearer(
+    auto_error=False,
+    scheme_name="Bearer Token (Optional)",
+    description="Optional authentication for unified salon/user creation."
+)
+
 
 def get_db():
     """Dependency to get a database session."""

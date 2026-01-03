@@ -10,12 +10,15 @@ from db.session import engine, Base
 from api.v1 import auth
 from api.v1 import users
 from api.v1 import salons
+from api.v1 import services
 from api.v1 import bookings
 from api.v1 import availability
+from api.v1 import employee
 
 
 # create tables (simple approach for dev)
-Base.metadata.create_all(bind=engine)
+# create tables (simple approach for dev)
+# Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="SalonConnect API")
 
@@ -27,7 +30,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
+
 
 
 @app.get("/api/health")
@@ -38,6 +41,9 @@ async def health():
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(users.router, prefix="/api/users", tags=["users"])
 app.include_router(salons.router, prefix="/api/salons", tags=["salons"])
+app.include_router(services.router, prefix="/api/services", tags=["services"])
 app.include_router(bookings.router, prefix="/api/bookings", tags=["bookings"])
 app.include_router(availability.router,
                    prefix="/api/availability", tags=["availability"])
+app.include_router(employee.router,
+                   prefix="/api/employee", tags=["employee"])

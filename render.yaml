@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: salonconnect-backend
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: salonconnect-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "30"
+      - key: PYTHON_VERSION
+        value: "3.11.7"
+
+databases:
+  - name: salonconnect-db
+    databaseName: salon_db
+    user: salon
+    plan: free

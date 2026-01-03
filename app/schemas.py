@@ -12,6 +12,24 @@ class UserCreate(BaseModel):
     role: Optional[int] = None  # e.g., 0=admin,1=customer,2=salon_owner
 
 
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    role: Optional[int] = None
+
+
+class UserOut(BaseModel):
+    id: int
+    email: EmailStr
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    role: str  # DB stores as string mostly, or mapped. User model has default="customer"
+    created_at: Optional[datetime] = None
+
+    class Config:
+        orm_mode = True
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
@@ -49,6 +67,13 @@ class ServiceCreate(BaseModel):
     price: float
 
 
+class ServiceUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    duration_minutes: Optional[int] = None
+    price: Optional[float] = None
+
+
 class ServiceOut(BaseModel):
     id: int
     name: str
@@ -57,7 +82,7 @@ class ServiceOut(BaseModel):
     price: float
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
 class SalonCreate(BaseModel):
@@ -72,6 +97,7 @@ class SalonCreate(BaseModel):
     work_end_hour: Optional[int] = 18
     services: Optional[List[ServiceCreate]] = []
     city: Optional[str] = None
+    owner_details: Optional[UserCreate] = None
 
 class SalonOut(BaseModel):
     id: int
@@ -90,7 +116,7 @@ class SalonOut(BaseModel):
     services: List[ServiceOut] = []
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
 # bookings schemas (add to app/schemas.py)
@@ -114,4 +140,21 @@ class BookingOut(BaseModel):
     created_at: datetime
 
     class Config:
-        from_attributes = True
+        orm_mode = True
+
+
+class EmployeeCreate(BaseModel):
+    name: str
+    experience_years: int
+    service_id: int
+
+class EmployeeResponse(BaseModel):
+    id: int
+    name: str
+    experience_years: int
+    service_id: int
+    salon_id: int
+    is_active: bool
+
+    class Config:
+        orm_mode = True
